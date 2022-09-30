@@ -1537,6 +1537,39 @@
   resolved "https://registry.yarnpkg.com/@emotion/weak-memoize/-/weak-memoize-0.3.0.tgz#ea89004119dc42db2e1dba0f97d553f7372f6fcb"
   integrity sha512-AHPmaAx+RYfZz0eYu6Gviiagpmiyw98ySSlQvCUhVGDRtDFe4DBS0x1bSjdF3gqUDYOczB+yYvBTtEylYSdRhg==
 
+"@fortawesome/fontawesome-common-types@6.2.0":
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-common-types/-/fontawesome-common-types-6.2.0.tgz#76467a94aa888aeb22aafa43eb6ff889df3a5a7f"
+  integrity sha512-rBevIsj2nclStJ7AxTdfsa3ovHb1H+qApwrxcTVo+NNdeJiB9V75hsKfrkG5AwNcRUNxrPPiScGYCNmLMoh8pg==
+
+"@fortawesome/fontawesome-svg-core@^6.2.0":
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-svg-core/-/fontawesome-svg-core-6.2.0.tgz#11856eaf4dd1d865c442ddea1eed8ee855186ba2"
+  integrity sha512-Cf2mAAeMWFMzpLC7Y9H1I4o3wEU+XovVJhTiNG8ZNgSQj53yl7OCJaS80K4YjrABWZzbAHVaoHE1dVJ27AAYXw==
+  dependencies:
+    "@fortawesome/fontawesome-common-types" "6.2.0"
+
+"@fortawesome/free-regular-svg-icons@^6.2.0":
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/@fortawesome/free-regular-svg-icons/-/free-regular-svg-icons-6.2.0.tgz#947e1f03be17da3a60bfeb2666b5348b19448ce2"
+  integrity sha512-M1dG+PAmkYMTL9BSUHFXY5oaHwBYfHCPhbJ8qj8JELsc9XCrUJ6eEHWip4q0tE+h9C0DVyFkwIM9t7QYyCpprQ==
+  dependencies:
+    "@fortawesome/fontawesome-common-types" "6.2.0"
+
+"@fortawesome/free-solid-svg-icons@^6.2.0":
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/@fortawesome/free-solid-svg-icons/-/free-solid-svg-icons-6.2.0.tgz#8dcde48109354fd7a5ece8ea48d678bb91d4b5f0"
+  integrity sha512-UjCILHIQ4I8cN46EiQn0CZL/h8AwCGgR//1c4R96Q5viSRwuKVo0NdQEc4bm+69ZwC0dUvjbDqAHF1RR5FA3XA==
+  dependencies:
+    "@fortawesome/fontawesome-common-types" "6.2.0"
+
+"@fortawesome/react-fontawesome@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@fortawesome/react-fontawesome/-/react-fontawesome-0.2.0.tgz#d90dd8a9211830b4e3c08e94b63a0ba7291ddcf4"
+  integrity sha512-uHg75Rb/XORTtVt7OS9WoK8uM276Ufi7gCzshVWkUJbHhh3svsUUeqXerrM96Wm7fRiDzfKRwSoahhMIkGAYHw==
+  dependencies:
+    prop-types "^15.8.1"
+
 "@graphql-tools/merge@8.3.1":
   version "8.3.1"
   resolved "https://registry.yarnpkg.com/@graphql-tools/merge/-/merge-8.3.1.tgz#06121942ad28982a14635dbc87b5d488a041d722"
@@ -3211,6 +3244,11 @@ character-reference-invalid@^1.0.0:
   version "1.1.4"
   resolved "https://registry.yarnpkg.com/character-reference-invalid/-/character-reference-invalid-1.1.4.tgz#083329cda0eae272ab3dbbf37e9a382c13af1560"
   integrity sha512-mKKUkUbhPpQlCOfIuZkvSEgktjPFIsZKRRbC6KWVEMvlzblj3i3asQv5ODsrwt0N3pHAEvjP8KTQPHkp0+6jOg==
+
+chart.js@^3.9.1:
+  version "3.9.1"
+  resolved "https://registry.yarnpkg.com/chart.js/-/chart.js-3.9.1.tgz#3abf2c775169c4c71217a107163ac708515924b8"
+  integrity sha512-Ro2JbLmvg83gXF5F4sniaQ+lTbSv18E+TIf2cOeiH1Iqd2PGFOtem+DUufMZsCJwFE7ywPOpfXFBwRTGq7dh6w==
 
 checkpoint-client@1.1.21:
   version "1.1.21"
@@ -5636,7 +5674,7 @@ prompts@2.4.2, prompts@^2.4.2:
     kleur "^3.0.3"
     sisteransi "^1.0.5"
 
-prop-types@^15.6.0, prop-types@^15.6.2, prop-types@^15.7.2:
+prop-types@^15.6.0, prop-types@^15.6.2, prop-types@^15.7.2, prop-types@^15.8.1:
   version "15.8.1"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.8.1.tgz#67d87bf1a694f48435cf332c24af10214a3140b5"
   integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
@@ -5723,6 +5761,11 @@ raw-body@2.5.1:
     http-errors "2.0.0"
     iconv-lite "0.4.24"
     unpipe "1.0.0"
+
+react-chartjs-2@^4.3.1:
+  version "4.3.1"
+  resolved "https://registry.yarnpkg.com/react-chartjs-2/-/react-chartjs-2-4.3.1.tgz#9941e7397fb963f28bb557addb401e9ff96c6681"
+  integrity sha512-5i3mjP6tU7QSn0jvb8I4hudTzHJqS8l00ORJnVwI2sYu0ihpj83Lv2YzfxunfxTZkscKvZu2F2w9LkwNBhj6xA==
 
 react-clientside-effect@^1.2.6:
   version "1.2.6"
@@ -6405,6 +6448,11 @@ tabbable@^5.3.3:
   version "5.3.3"
   resolved "https://registry.yarnpkg.com/tabbable/-/tabbable-5.3.3.tgz#aac0ff88c73b22d6c3c5a50b1586310006b47fbf"
   integrity sha512-QD9qKY3StfbZqWOPLp0++pOrAVb/HbUi5xCc8cUo4XjP19808oaMiDzn0leBY5mCespIBM0CIZePzZjgzR83kA==
+
+tail@^2.2.4:
+  version "2.2.4"
+  resolved "https://registry.yarnpkg.com/tail/-/tail-2.2.4.tgz#90dd4c5a174a3fa39dcb65a1df1950a4a0093a41"
+  integrity sha512-PX8klSxW1u3SdgDrDeewh5GNE+hkJ4h02JvHfV6YrHqWOVJ88nUdSQqtsUf/gWhgZlPAws3fiZ+F1f8euspcuQ==
 
 tar-stream@^2.2.0:
   version "2.2.0"
