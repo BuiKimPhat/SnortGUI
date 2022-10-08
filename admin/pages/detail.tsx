@@ -9,7 +9,7 @@ import React from 'react';
 import { jsx } from '@keystone-ui/core';
 import { faArrowUpAZ } from '@fortawesome/free-solid-svg-icons';
 
-export default function Detail() {
+export default function Detail({ alerts }: InferGetStaticPropsType<typeof getStaticProps>) {
     return (
         <PageContainer header={<Heading type="h2">Alert details</Heading>}>
             <div>
@@ -124,3 +124,13 @@ export default function Detail() {
         </PageContainer>
     )
 }
+
+export async function getStaticProps() {
+    const res = await fetch('localhost:5000/alerts')
+    const posts = await res.json()
+    return {
+      props: {
+        alerts
+      },
+    };
+  }
