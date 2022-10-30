@@ -2,18 +2,61 @@ import { PageContainer } from '@keystone-6/core/admin-ui/components';
 import { Heading } from '@keystone-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React from 'react';
-/** @jsxRuntime classic */
-/** @jsxRuntime classic */
-/** @jsx jsx */
 
-import { jsx } from '@keystone-ui/core';
 import { faArrowUpAZ } from '@fortawesome/free-solid-svg-icons';
+import { useState, useEffect } from 'react';
 
-export default function Detail({ alerts }: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function Detail() {
+    const [data, setData] = useState(null)
+    const [isLoading, setLoading] = useState(false)
+    const [display, setDisplay] = useState(null)
+    const [filter, setFilter] = useState("all")
+
+    const filterDisplay = fil => {
+        if (data == null) return;
+        let tmp = [];
+        if (fil == "all") {
+            setDisplay(data);
+            return;
+        } else if (fil == "IP") {
+            data.forEach(d => {
+                if (d.prot == "IP" || d.prot == "TCP" || d.prot == "UDP" || d.prot == "ICMP" || d.prot == "ARP"){
+                    tmp.push(d);
+                }
+            });    
+        } else {
+            data.forEach(d => {
+                if (d.prot == fil){
+                    tmp.push(d);
+                }
+            });    
+        }
+        setDisplay(tmp);
+    }
+
+    const handleFilterChange = e => {
+        setFilter(e.target.value);
+        filterDisplay(e.target.value);
+    }
+
+    useEffect(() => {
+        setLoading(true)
+        fetch('http://localhost:5000/alerts')
+            .then((res) => res.json())
+            .then((data) => {
+                setData(data)
+                setDisplay(data)
+                setLoading(false)
+            })
+    }, [])
+
+    if (isLoading) return <PageContainer header={<Heading type="h2">Alert details</Heading>}><p>Loading...</p></PageContainer>
+    if (!data) return <PageContainer header={<Heading type="h2">Alert details</Heading>}><p>No data</p></PageContainer>
+
     return (
         <PageContainer header={<Heading type="h2">Alert details</Heading>}>
             <div>
-                <style jsx>{`
+                <style>{`
                 #customers {
                     border-collapse: collapse;
                     width: 100%;
@@ -53,84 +96,39 @@ export default function Detail({ alerts }: InferGetStaticPropsType<typeof getSta
             `}</style>
                 <div className='toolbar'>
                     <label htmlFor="filter">Filter:</label>
-                    <select name='filter'>
+                    <select name='filter' value={filter} onChange={e => handleFilterChange(e)}>
                         <option value="all">All</option>
-                        <option value="ip">IP</option>
-                        <option value="tcp">TCP</option>
-                        <option value="udp">UDP</option>
-                        <option value="icmp">ICMP</option>
-                        <option value="arp">ARP</option>
-
+                        <option value="IP">IP</option>
+                        <option value="TCP">TCP</option>
+                        <option value="UDP">UDP</option>
+                        <option value="ICMP">ICMP</option>
+                        <option value="ARP">ARP</option>
                     </select>
                 </div>
                 <table id="customers">
-                    <tr>
-                        <th><a><FontAwesomeIcon icon={faArrowUpAZ} /> Alert</a></th>
-                        <th><a><FontAwesomeIcon icon={faArrowUpAZ} /> Source IP</a></th>
-                        <th><a><FontAwesomeIcon icon={faArrowUpAZ} /> Destination IP</a></th>
-                    </tr>
-                    <tr>
-                        <td>Alfreds Futterkiste</td>
-                        <td>Maria Anders</td>
-                        <td>Germany</td>
-                    </tr>
-                    <tr>
-                        <td>Berglunds snabbköp</td>
-                        <td>Christina Berglund</td>
-                        <td>Sweden</td>
-                    </tr>
-                    <tr>
-                        <td>Centro comercial Moctezuma</td>
-                        <td>Francisco Chang</td>
-                        <td>Mexico</td>
-                    </tr>
-                    <tr>
-                        <td>Ernst Handel</td>
-                        <td>Roland Mendel</td>
-                        <td>Austria</td>
-                    </tr>
-                    <tr>
-                        <td>Island Trading</td>
-                        <td>Helen Bennett</td>
-                        <td>UK</td>
-                    </tr>
-                    <tr>
-                        <td>Königlich Essen</td>
-                        <td>Philip Cramer</td>
-                        <td>Germany</td>
-                    </tr>
-                    <tr>
-                        <td>Laughing Bacchus Winecellars</td>
-                        <td>Yoshi Tannamuri</td>
-                        <td>Canada</td>
-                    </tr>
-                    <tr>
-                        <td>Magazzini Alimentari Riuniti</td>
-                        <td>Giovanni Rovelli</td>
-                        <td>Italy</td>
-                    </tr>
-                    <tr>
-                        <td>North/South</td>
-                        <td>Simon Crowther</td>
-                        <td>UK</td>
-                    </tr>
-                    <tr>
-                        <td>Paris spécialités</td>
-                        <td>Marie Bertrand</td>
-                        <td>France</td>
-                    </tr>
+                    <thead>
+                        <tr>
+                            <th><a><FontAwesomeIcon icon={faArrowUpAZ} /> Timestamp</a></th>
+                            <th><a><FontAwesomeIcon icon={faArrowUpAZ} /> Protocol</a></th>
+                            <th><a><FontAwesomeIcon icon={faArrowUpAZ} /> Message</a></th>
+                            <th><a><FontAwesomeIcon icon={faArrowUpAZ} /> Source IP</a></th>
+                            <th><a><FontAwesomeIcon icon={faArrowUpAZ} /> Destination IP</a></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {display.map((row,i) => (
+                        <tr key={i}>
+                            <td>{row.time}</td>
+                            <td>{row.prot}</td>
+                            <td>{row.mess}</td>
+                            <td>{row.src}</td>
+                            <td>{row.dest}</td>
+                        </tr>
+                        ))}
+                    </tbody>
                 </table>
             </div>
         </PageContainer>
     )
 }
-
-export async function getStaticProps() {
-    const res = await fetch('localhost:5000/alerts')
-    const posts = await res.json()
-    return {
-      props: {
-        alerts
-      },
-    };
-  }

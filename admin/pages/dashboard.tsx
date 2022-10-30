@@ -1,7 +1,6 @@
 import { PageContainer } from '@keystone-6/core/admin-ui/components';
 import { Heading } from '@keystone-ui/core';
 import React from 'react';
-import { useEffect } from 'react';
 /** @jsxRuntime classic */
 /** @jsxRuntime classic */
 /** @jsx jsx */
@@ -10,6 +9,7 @@ import { jsx } from '@keystone-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation, faNetworkWired } from '@fortawesome/free-solid-svg-icons';
 import { NumberDotFormat } from '../../utils/format';
+import { useState, useEffect } from 'react';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -19,54 +19,56 @@ import {
     Title,
     Tooltip,
     Legend,
+    ArcElement,
 } from 'chart.js';
-import { Line } from 'react-chartjs-2';
-
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend
-);
-
-export const options = {
-    responsive: true,
-    plugins: {
-        legend: {
-            position: 'top' as const,
-        },
-        title: {
-            display: true,
-            text: 'Chart.js Line Chart',
-        },
-    },
-};
-
-const labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
-
-export const data = {
-    labels,
-    datasets: [
-        {
-            label: 'Dataset 1',
-            data: [69, 100, 20, 1, 0, 4, 70, 50],
-            borderColor: 'rgb(255, 99, 132)',
-            backgroundColor: 'rgba(255, 99, 132, 0.5)',
-        },
-        {
-            label: 'Dataset 2',
-            data: [50, 70, 4, 0, 1, 20, 100, 69],
-            borderColor: 'rgb(53, 162, 235)',
-            backgroundColor: 'rgba(53, 162, 235, 0.5)',
-        },
-    ],
-};
-
+import { Doughnut } from 'react-chartjs-2';
 
 export default function DashBoard() {
+    const [data, setData] = useState(null)
+    const [isLoading, setLoading] = useState(false)
+
+    useEffect(() => {
+        setLoading(true)
+        fetch('http://localhost:5000/statistic')
+            .then((res) => res.json())
+            .then((data) => {
+                setData(data)
+                setLoading(false)
+            })
+    }, [])
+
+    ChartJS.register(ArcElement, Tooltip, Legend);
+
+    const labels = ['TCP', 'UDP', 'ICMP', 'ARP', 'Others'];
+    const chartdata = {
+        labels,
+        datasets: [
+            {
+                label: 'Number of alerts',
+                data: [data ? data.tcp : 0, data ? data.udp : 0, data ? data.icmp : 0, data ? data.arp : 0, data ? data.all-data.ip : 0],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                ],
+                borderWidth: 1,
+            },
+        ],
+    };
+
+
+    if (isLoading) return <PageContainer header={<Heading type="h2">Snort Dashboard</Heading>}><p>Loading...</p></PageContainer>
+    if (!data) return <PageContainer header={<Heading type="h2">Snort Dashboard</Heading>}><p>No data</p></PageContainer>
+
     return (
         <PageContainer header={<Heading type="h2">Snort Dashboard</Heading>}>
             <div className='row'>
@@ -119,7 +121,7 @@ export default function DashBoard() {
                             }}><FontAwesomeIcon icon={faTriangleExclamation} />Total alerts</span></div>
                             <div><span className='card-number' style={{
                                 color: "#E84545"
-                            }}>{NumberDotFormat(221)}</span></div>
+                            }}>{NumberDotFormat(data.all)}</span></div>
                         </div>
                     </div>
                 </div>
@@ -127,7 +129,7 @@ export default function DashBoard() {
                     <div className="card row">
                         <div className="card-body row">
                             <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> IP alerts</span></div>
-                            <div><span className='card-number'>{NumberDotFormat(50)}</span></div>
+                            <div><span className='card-number'>{NumberDotFormat(data.ip)}</span></div>
                         </div>
                     </div>
                 </div>
@@ -135,7 +137,7 @@ export default function DashBoard() {
                     <div className="card row">
                         <div className="card-body row">
                             <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> TCP alerts</span></div>
-                            <div><span className='card-number'>{NumberDotFormat(15)}</span></div>
+                            <div><span className='card-number'>{NumberDotFormat(data.tcp)}</span></div>
                         </div>
                     </div>
                 </div>
@@ -143,7 +145,7 @@ export default function DashBoard() {
                     <div className="card row">
                         <div className="card-body row">
                             <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> ICMP alerts</span></div>
-                            <div><span className='card-number'>{NumberDotFormat(69)}</span></div>
+                            <div><span className='card-number'>{NumberDotFormat(data.icmp)}</span></div>
                         </div>
                     </div>
                 </div>
@@ -151,7 +153,7 @@ export default function DashBoard() {
                     <div className="card row">
                         <div className="card-body row">
                             <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> UDP alerts</span></div>
-                            <div><span className='card-number'>{NumberDotFormat(87)}</span></div>
+                            <div><span className='card-number'>{NumberDotFormat(data.udp)}</span></div>
                         </div>
                     </div>
                 </div>
@@ -159,16 +161,16 @@ export default function DashBoard() {
                     <div className="card row">
                         <div className="card-body row">
                             <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> ARP alerts</span></div>
-                            <div><span className='card-number'>{NumberDotFormat(18)}</span></div>
+                            <div><span className='card-number'>{NumberDotFormat(data.arp)}</span></div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div style={{
-                margin: "1.5rem"
+                margin: "1.5rem",
             }}>
-                <Line options={options} data={data} />
+                <Doughnut height="400px" width="400px" options={{ maintainAspectRatio: false }} data={chartdata} />
             </div>
         </PageContainer>
     )
