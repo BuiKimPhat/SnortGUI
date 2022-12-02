@@ -2,22 +2,39 @@ require('dotenv').config();
 
 const express = require('express');
 var cors = require('cors');
-const webPush = require('web-push');
 const bodyParser = require('body-parser');
-const path = require('path');
 const csv = require('csvtojson');
 
 const app = express();
+const http = require('http');
+const server = http.createServer(app);
+const io = require("socket.io")(server, {
+  cors: {
+    origin: "http://192.168.118.128:3000"
+  }
+});
 
 app.use(cors());
 app.use(bodyParser.json());
 
-app.use(express.static(path.join(__dirname, 'client')));
+// Read file in real-time
+Tail = require('tail').Tail;
+tail = new Tail("/var/log/snort/alert.csv");
+tail.on("error", function(error) {
+  console.log('Tail error: ', error);
+});
 
-const publicVapidKey = process.env.PUBLIC_VAPID_KEY;
-const privateVapidKey = process.env.PRIVATE_VAPID_KEY;
-
-webPush.setVapidDetails('mailto:test@example.com', publicVapidKey, privateVapidKey);
+// Real-time alerts
+io.on('connection', (socket) => {
+  console.log('A user has connected to the socket');
+  tail.on("line", (data) => {
+    io.emit('new alert', data)
+    console.log(data)
+  });
+  socket.on('disconnect', () => {
+    console.log('A user has disconnected from the socket');
+  });
+});
 
 // Read all alerts
 app.get('/alerts', (req,res) => {
@@ -32,6 +49,7 @@ app.get('/alerts', (req,res) => {
   })
 })
 
+// Get statistics
 app.get('/statistic', (req,res) => {
   const csvFilePath = '/var/log/snort/alert.csv';
   csv({
@@ -69,20 +87,8 @@ app.get('/statistic', (req,res) => {
   })
 })
 
-app.post('/subscribe', (req, res) => {
-  const subscription = req.body
+app.set('port', process.env.PORT || 8000);
 
-  res.status(201).json({});
-
-  const payload = JSON.stringify({
-    title: 'Push notifications with Service Workers',
-  });
-
-  webPush.sendNotification(subscription, payload)
-    .catch(error => console.error(error));
-});
-
-app.set('port', process.env.PORT || 5000);
-const server = app.listen(app.get('port'), () => {
+server.listen(app.get('port'), () => {
   console.log(`Express server is running on PORT ${server.address().port}`);
 });

@@ -3,8 +3,8 @@
   "version": "1.0.2",
   "private": true,
   "scripts": {
-    "dev": "keystone dev",
-    "start": "keystone start",
+    "dev": "node services/server.js & keystone dev",
+    "start": "node services/server.js & keystone start",
     "build": "keystone build",
     "postinstall": "keystone postinstall"
   },
@@ -25,9 +25,10 @@
     "graphql": "^15.8.0",
     "next": "12.2.4",
     "react-chartjs-2": "^4.3.1",
+    "socket.io": "^4.5.3",
+    "socket.io-client": "^4.5.3",
     "tail": "^2.2.4",
-    "typescript": "^4.7.4",
-    "web-push": "^3.5.0"
+    "typescript": "^4.7.4"
   },
   "// npm": "this is a temporary workaround for npm users, see https://github.com/keystonejs/create-keystone-app/pull/350",
   "overrides": {

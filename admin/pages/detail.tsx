@@ -5,12 +5,14 @@ import React from 'react';
 
 import { faArrowUpAZ } from '@fortawesome/free-solid-svg-icons';
 import { useState, useEffect } from 'react';
+import { quickSortByTime } from '../../utils/sort.js'
 
 export default function Detail() {
     const [data, setData] = useState(null)
     const [isLoading, setLoading] = useState(false)
     const [display, setDisplay] = useState(null)
     const [filter, setFilter] = useState("all")
+    const [timeAsc, setTimeAsc] = useState(true)
 
     const filterDisplay = fil => {
         if (data == null) return;
@@ -39,15 +41,29 @@ export default function Detail() {
         filterDisplay(e.target.value);
     }
 
-    useEffect(() => {
+    const handleRefresh = () => {
+        fetch('http://192.168.118.128:8000/alerts')
+        .then((res) => res.json())
+        .then((data) => {
+            setData(data);
+            filterDisplay(filter);
+            setLoading(false);
+        })
+    }
+
+    const fetchData = () => {
         setLoading(true)
-        fetch('http://localhost:5000/alerts')
+        fetch('http://192.168.118.128:8000/alerts')
             .then((res) => res.json())
             .then((data) => {
                 setData(data)
                 setDisplay(data)
                 setLoading(false)
             })
+    }
+
+    useEffect(() => {
+        fetchData();
     }, [])
 
     if (isLoading) return <PageContainer header={<Heading type="h2">Alert details</Heading>}><p>Loading...</p></PageContainer>
@@ -93,6 +109,15 @@ export default function Detail() {
                 th > a:hover {
                     color: #364F6B;
                 }
+                .btn-success {
+                    margin-left: 2rem;
+                    background-color: #04AA6D;
+                    border: 1px solid green;
+                    border-radius: 5px;
+                    color: white;
+                    padding: 8px;
+                    cursor: pointer;
+                }
             `}</style>
                 <div className='toolbar'>
                     <label htmlFor="filter">Filter:</label>
@@ -104,6 +129,7 @@ export default function Detail() {
                         <option value="ICMP">ICMP</option>
                         <option value="ARP">ARP</option>
                     </select>
+                    <button className='btn-success' type="button" onClick={() => handleRefresh()}>Refresh</button>
                 </div>
                 <table id="customers">
                     <thead>

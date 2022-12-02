@@ -11,7 +11,7 @@ export function CustomNavigation({ authenticatedItem, lists }: NavigationProps) 
       <ListNavItems lists={lists}/>
       <NavItem href="/dashboard"><FontAwesomeIcon icon={faChartLine} /> Snort dashboard</NavItem>
       <NavItem href="/detail"><FontAwesomeIcon icon={faCircleInfo} /> Alert details</NavItem>
-      <NavItem href="/setting"><FontAwesomeIcon icon={faGear} /> Snort setting</NavItem>
+      {/* <NavItem href="/setting"><FontAwesomeIcon icon={faGear} /> Snort setting</NavItem> */}
     </NavigationContainer>
   )
 }

@@ -67,6 +67,12 @@ export const lists: Lists = {
       },
     },
   }),
+
+  // Alert: list({
+  //   fields: {
+      
+  //   }
+  // })
   // // Our second list is the Posts list. We've got a few more fields here
   // // so we have all the info we need for displaying posts.
   // Post: list({

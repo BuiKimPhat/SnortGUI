@@ -76,15 +76,11 @@ export default function DashBoard() {
                       border-radius: 50%;
                     }
                 `}</style>
-        <label htmlFor='notification' style={{ fontSize: "1.2rem" }}>Enable alert notification</label>
+        {/* <label htmlFor='notification' style={{ fontSize: "1.2rem" }}>Enable alert notification</label>
         <label className="switch">
           <input name='notification' type="checkbox" />
           <span className="slider round"></span>
-        </label>
-        <div className="buttons">
-          <button type="button" className="trigger-push">Trigger Push Notification</button>
-        </div>
-        <script src="../../utils/clientpush.js"></script>
+        </label> */}
       </div>
     </PageContainer>
   )
