@@ -73,12 +73,12 @@ export const lists: Lists = {
     fields: {
       timestamp: timestamp(),
       protocol: select({
-        type: 'enum',
+        type: 'string',
         options: [
-          { label: 'TCP', value: 'tcp' },
-          { label: 'ICMP', value: 'icmp' },
-          { label: 'UDP', value: 'udp' },
-          { label: 'ARP', value: 'arp' }
+          { label: 'TCP', value: 'TCP' },
+          { label: 'ICMP', value: 'ICMP' },
+          { label: 'UDP', value: 'UDP' },
+          { label: 'ARP', value: 'ARP' }
         ],
       }),
       message: text(),

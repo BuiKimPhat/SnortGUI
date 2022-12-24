@@ -43,36 +43,36 @@ export default function DashBoard() {
 
 
     useEffect(() => {
-        setLoading(true)
-        fetch('http://192.168.118.128:8000/statistic')
-            .then((res) => res.json())
-            .then((data) => {
-                setData(data)
-                setLoading(false)
-            });
+        // setLoading(true)
+        // fetch('http://192.168.118.128:8000/statistic')
+        //     .then((res) => res.json())
+        //     .then((data) => {
+        //         setData(data)
+        //         setLoading(false)
+        //     });
 
-        // socketio
-        socket.on('connect', () => {
-            setIsConnected(true);
-        });
-        socket.on('disconnect', () => {
-            setIsConnected(false);
-        });
-        socket.on('new alert', (data) => {
-            setAlert(data);
+        // // socketio
+        // socket.on('connect', () => {
+        //     setIsConnected(true);
+        // });
+        // socket.on('disconnect', () => {
+        //     setIsConnected(false);
+        // });
+        // socket.on('new alert', (data) => {
+        //     setAlert(data);
 
-            // notify interval
-            let currentTime = new Date().getTime();
-            if (currentTime - lastSound >= interval) {
-                audio.play();
-                lastSound = currentTime;
-            }
-        });
-        return () => {
-            socket.off('connect');
-            socket.off('disconnect');
-            socket.off('new alert');
-        };
+        //     // notify interval
+        //     let currentTime = new Date().getTime();
+        //     if (currentTime - lastSound >= interval) {
+        //         audio.play();
+        //         lastSound = currentTime;
+        //     }
+        // });
+        // return () => {
+        //     socket.off('connect');
+        //     socket.off('disconnect');
+        //     socket.off('new alert');
+        // };
 
     }, [])
 

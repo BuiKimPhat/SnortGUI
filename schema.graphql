@@ -96,7 +96,7 @@ input UserCreateInput {
 type Alert {
   id: ID!
   timestamp: DateTime
-  protocol: AlertProtocolType
+  protocol: String
   message: String
   sourceIP: String
   sourcePort: Int
@@ -108,13 +108,6 @@ type Alert {
 scalar DateTime
   @specifiedBy(url: "https://datatracker.ietf.org/doc/html/rfc3339#section-5.6")
 
-enum AlertProtocolType {
-  tcp
-  icmp
-  udp
-  arp
-}
-
 input AlertWhereUniqueInput {
   id: ID
 }
@@ -125,7 +118,7 @@ input AlertWhereInput {
   NOT: [AlertWhereInput!]
   id: IDFilter
   timestamp: DateTimeNullableFilter
-  protocol: AlertProtocolTypeNullableFilter
+  protocol: StringNullableFilter
   message: StringFilter
   sourceIP: StringFilter
   sourcePort: IntNullableFilter
@@ -145,11 +138,32 @@ input DateTimeNullableFilter {
   not: DateTimeNullableFilter
 }
 
-input AlertProtocolTypeNullableFilter {
-  equals: AlertProtocolType
-  in: [AlertProtocolType!]
-  notIn: [AlertProtocolType!]
-  not: AlertProtocolTypeNullableFilter
+input StringNullableFilter {
+  equals: String
+  in: [String!]
+  notIn: [String!]
+  lt: String
+  lte: String
+  gt: String
+  gte: String
+  contains: String
+  startsWith: String
+  endsWith: String
+  not: NestedStringNullableFilter
+}
+
+input NestedStringNullableFilter {
+  equals: String
+  in: [String!]
+  notIn: [String!]
+  lt: String
+  lte: String
+  gt: String
+  gte: String
+  contains: String
+  startsWith: String
+  endsWith: String
+  not: NestedStringNullableFilter
 }
 
 input IntNullableFilter {
@@ -177,7 +191,7 @@ input AlertOrderByInput {
 
 input AlertUpdateInput {
   timestamp: DateTime
-  protocol: AlertProtocolType
+  protocol: String
   message: String
   sourceIP: String
   sourcePort: Int
@@ -193,7 +207,7 @@ input AlertUpdateArgs {
 
 input AlertCreateInput {
   timestamp: DateTime
-  protocol: AlertProtocolType
+  protocol: String
   message: String
   sourceIP: String
   sourcePort: Int

@@ -1,3 +1,2 @@
-exports.getConfig = () => require("../../../../keystone");
-const x = Math.random();
-exports.default = function (req, res) { return res.send(x.toString()) }
+export { default as config } from "../../../../keystone";
+            export default function (req, res) { return res.status(500) }

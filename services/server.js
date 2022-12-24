@@ -10,10 +10,10 @@ const http = require('http');
 const server = http.createServer(app);
 const io = require("socket.io")(server, {
   cors: {
-    origin: "http://192.168.1.69:3000"
+    origin: "http://192.168.1.70:3000"
   }
 });
-const {ApolloClient, gql, InMemoryCache} = require('@apollo/client');
+const { gql, ApolloClient, InMemoryCache } = require('@apollo/client');
 
 const csvFilePath = '/var/log/snort/alert.csv';
 
@@ -43,44 +43,43 @@ tail.on("line", (data) => {
   })
     .fromString(data)
     .then(jsonObj => {
+      const alert = jsonObj[0];
       const client = new ApolloClient({
-        uri: 'http://192.168.1.69:3000/api/graphql',
+        uri: 'http://192.168.1.70:3000/api/graphql',
         cache: new InMemoryCache()
       });
-      const results = client.query({
-        query: gql`
-          {
-            createAlert(data: {
-              timestamp: "${jsonObj.time}",
-              protocol: ${jsonObj.prot},
-              message: "${jsonObj.msg}",
-              sourceIP: "${jsonObj.src}",
-              sourcePort: ${jsonObj.srcport},
-              destinationIP: "${jsonObj.dest}",
-              destinationPort: ${jsonObj.dstport},
-              SID: ${jsonObj.sid}
-            }) {
-              protocol
-            }
-          }
-        `,
-      });
-      console.log(results);
+      const CREATE_ALERT = gql`
+      mutation CreateAlert($time: DateTime, $prot: String, $msg: String, $src: String, $srcport: Int, $dest: String, $dstport: Int, $SID: Int){
+        createAlert(data: {
+          timestamp: $time, 
+          protocol: $prot,
+          message: $msg,
+          sourceIP: $src,
+          sourcePort: $srcport,
+          destinationIP: $dest,
+          destinationPort: $dstport,
+          SID: $SID
+        }){
+          timestamp,
+          message
+        }
+      }
+      `;
+      client.mutate({
+        mutation: CREATE_ALERT,
+        variables: {
+          time: new Date(alert.time).toISOString(),
+          prot: alert.prot,
+          msg: alert.msg,
+          src: alert.src,
+          srcport: Number(alert.srcport),
+          dest: alert.dest,
+          dstport: Number(alert.dstport),
+          SID: Number(alert.sid)
+        }
+      })
     })
 });
-
-// Read all alerts
-// app.get('/alerts', (req,res) => {
-//   const csvFilePath = '/var/log/snort/alert.csv';
-//   csv({
-//     noheader: true,
-//     headers: ["time","prot","mess","src","dest"]
-//   })
-//   .fromFile(csvFilePath)
-//   .then(jsonObj => {
-//     res.status(200).json(jsonObj)
-//   })
-// })
 
 // Get statistics
 // app.get('/statistic', (req,res) => {
