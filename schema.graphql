@@ -93,6 +93,115 @@ input UserCreateInput {
   password: String
 }
 
+type Alert {
+  id: ID!
+  timestamp: DateTime
+  protocol: AlertProtocolType
+  message: String
+  sourceIP: String
+  sourcePort: Int
+  destinationIP: String
+  destinationPort: Int
+  SID: Int
+}
+
+scalar DateTime
+  @specifiedBy(url: "https://datatracker.ietf.org/doc/html/rfc3339#section-5.6")
+
+enum AlertProtocolType {
+  tcp
+  icmp
+  udp
+  arp
+}
+
+input AlertWhereUniqueInput {
+  id: ID
+}
+
+input AlertWhereInput {
+  AND: [AlertWhereInput!]
+  OR: [AlertWhereInput!]
+  NOT: [AlertWhereInput!]
+  id: IDFilter
+  timestamp: DateTimeNullableFilter
+  protocol: AlertProtocolTypeNullableFilter
+  message: StringFilter
+  sourceIP: StringFilter
+  sourcePort: IntNullableFilter
+  destinationIP: StringFilter
+  destinationPort: IntNullableFilter
+  SID: IntNullableFilter
+}
+
+input DateTimeNullableFilter {
+  equals: DateTime
+  in: [DateTime!]
+  notIn: [DateTime!]
+  lt: DateTime
+  lte: DateTime
+  gt: DateTime
+  gte: DateTime
+  not: DateTimeNullableFilter
+}
+
+input AlertProtocolTypeNullableFilter {
+  equals: AlertProtocolType
+  in: [AlertProtocolType!]
+  notIn: [AlertProtocolType!]
+  not: AlertProtocolTypeNullableFilter
+}
+
+input IntNullableFilter {
+  equals: Int
+  in: [Int!]
+  notIn: [Int!]
+  lt: Int
+  lte: Int
+  gt: Int
+  gte: Int
+  not: IntNullableFilter
+}
+
+input AlertOrderByInput {
+  id: OrderDirection
+  timestamp: OrderDirection
+  protocol: OrderDirection
+  message: OrderDirection
+  sourceIP: OrderDirection
+  sourcePort: OrderDirection
+  destinationIP: OrderDirection
+  destinationPort: OrderDirection
+  SID: OrderDirection
+}
+
+input AlertUpdateInput {
+  timestamp: DateTime
+  protocol: AlertProtocolType
+  message: String
+  sourceIP: String
+  sourcePort: Int
+  destinationIP: String
+  destinationPort: Int
+  SID: Int
+}
+
+input AlertUpdateArgs {
+  where: AlertWhereUniqueInput!
+  data: AlertUpdateInput!
+}
+
+input AlertCreateInput {
+  timestamp: DateTime
+  protocol: AlertProtocolType
+  message: String
+  sourceIP: String
+  sourcePort: Int
+  destinationIP: String
+  destinationPort: Int
+  SID: Int
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
@@ -108,6 +217,12 @@ type Mutation {
   updateUsers(data: [UserUpdateArgs!]!): [User]
   deleteUser(where: UserWhereUniqueInput!): User
   deleteUsers(where: [UserWhereUniqueInput!]!): [User]
+  createAlert(data: AlertCreateInput!): Alert
+  createAlerts(data: [AlertCreateInput!]!): [Alert]
+  updateAlert(where: AlertWhereUniqueInput!, data: AlertUpdateInput!): Alert
+  updateAlerts(data: [AlertUpdateArgs!]!): [Alert]
+  deleteAlert(where: AlertWhereUniqueInput!): Alert
+  deleteAlerts(where: [AlertWhereUniqueInput!]!): [Alert]
   endSession: Boolean!
   authenticateUserWithPassword(
     email: String!
@@ -146,6 +261,14 @@ type Query {
   ): [User!]
   user(where: UserWhereUniqueInput!): User
   usersCount(where: UserWhereInput! = {}): Int
+  alerts(
+    where: AlertWhereInput! = {}
+    orderBy: [AlertOrderByInput!]! = []
+    take: Int
+    skip: Int! = 0
+  ): [Alert!]
+  alert(where: AlertWhereUniqueInput!): Alert
+  alertsCount(where: AlertWhereInput! = {}): Int
   keystone: KeystoneMeta!
   authenticatedItem: AuthenticatedItem
 }

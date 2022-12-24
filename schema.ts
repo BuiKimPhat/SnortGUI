@@ -25,6 +25,7 @@ import {
   password,
   timestamp,
   select,
+  integer,
 } from '@keystone-6/core/fields';
 // The document field is a more complicated field, so it's in its own package
 // Keystone aims to have all the base field types, but you can make your own
@@ -68,11 +69,26 @@ export const lists: Lists = {
     },
   }),
 
-  // Alert: list({
-  //   fields: {
-      
-  //   }
-  // })
+  Alert: list({
+    fields: {
+      timestamp: timestamp(),
+      protocol: select({
+        type: 'enum',
+        options: [
+          { label: 'TCP', value: 'tcp' },
+          { label: 'ICMP', value: 'icmp' },
+          { label: 'UDP', value: 'udp' },
+          { label: 'ARP', value: 'arp' }
+        ],
+      }),
+      message: text(),
+      sourceIP: text(),
+      sourcePort: integer(),
+      destinationIP: text(),
+      destinationPort: integer(),
+      SID: integer()
+    }
+  })
   // // Our second list is the Posts list. We've got a few more fields here
   // // so we have all the info we need for displaying posts.
   // Post: list({

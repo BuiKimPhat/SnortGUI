@@ -18,3 +18,15 @@ model User {
   email    String @unique @default("")
   password String
 }
+
+model Alert {
+  id              String    @id @default(cuid())
+  timestamp       DateTime?
+  protocol        String?
+  message         String    @default("")
+  sourceIP        String    @default("")
+  sourcePort      Int?
+  destinationIP   String    @default("")
+  destinationPort Int?
+  SID             Int?
+}
