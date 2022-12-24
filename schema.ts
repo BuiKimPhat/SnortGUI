@@ -87,6 +87,13 @@ export const lists: Lists = {
       destinationIP: text(),
       destinationPort: integer(),
       SID: integer()
+    },
+    ui: {
+      listView: {
+        initialColumns: ['timestamp', 'message', 'sourceIP', 'sourcePort', 'destinationIP', 'destinationPort', 'protocol'],
+        initialSort: { field: 'timestamp', direction: 'DESC' },
+        pageSize: 100
+      }
     }
   })
   // // Our second list is the Posts list. We've got a few more fields here

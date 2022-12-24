@@ -10,6 +10,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation, faNetworkWired } from '@fortawesome/free-solid-svg-icons';
 import { NumberDotFormat } from '../../utils/format';
 import { useState, useEffect } from 'react';
+import { gql, ApolloClient, InMemoryCache } from '@apollo/client';
+
 import {
     Chart as ChartJS,
     Tooltip,
@@ -19,7 +21,7 @@ import {
 import { Doughnut } from 'react-chartjs-2';
 
 import io from 'socket.io-client';
-const socket = io('http://192.168.118.128:8000'); // real-time alert socket
+const socket = io('http://192.168.1.70:8000'); // real-time alert socket
 
 export default function DashBoard() {
     const [isConnected, setIsConnected] = useState(socket.connected); // real-time alert socket connection state
@@ -33,7 +35,7 @@ export default function DashBoard() {
     const audio = new Audio('/images/notify.mp3');
 
     const handleRefresh = () => {
-        fetch('http://192.168.118.128:8000/statistic')
+        fetch('http://192.168.1.70:8000/statistic')
         .then((res) => res.json())
         .then((data) => {
             setData(data)
@@ -43,36 +45,74 @@ export default function DashBoard() {
 
 
     useEffect(() => {
-        // setLoading(true)
-        // fetch('http://192.168.118.128:8000/statistic')
+        setLoading(true)
+        // fetch('http://192.168.1.70:8000/statistic')
         //     .then((res) => res.json())
         //     .then((data) => {
         //         setData(data)
         //         setLoading(false)
         //     });
+        let startTime = new Date();
+        startTime.setHours(startTime.getHours() - 6);
+        const client = new ApolloClient({
+            uri: 'http://192.168.1.70:3000/api/graphql',
+            cache: new InMemoryCache()
+          });
+        const COUNT6H = gql`
+        query Count6H($startTime: DateTime) {
+            tcp: alertsCount(where: {
+              protocol: {equals: "TCP"},
+              timestamp: {gte: $startTime}
+            }),
+            icmp: alertsCount(where: {
+              protocol: {contains: "ICMP"},
+              timestamp: {gte: $startTime}
+            }),
+            udp: alertsCount(where: {
+              protocol: {equals: "UDP"},
+              timestamp: {gte: $startTime}
+            }),
+            arp: alertsCount(where: {
+              protocol: {equals: "ARP"},
+              timestamp: {gte: $startTime}
+            })
+          }
+        `;
+        const count = client.query({
+            query: COUNT6H,
+            variables: {
+              startTime: startTime.toISOString()
+            }
+        }).then((data) => {
+            setData(data)
+            setLoading(false)
+            console.log(data)
+        }).catch(err => {
+            console.log(err)
+        })
 
-        // // socketio
-        // socket.on('connect', () => {
-        //     setIsConnected(true);
-        // });
-        // socket.on('disconnect', () => {
-        //     setIsConnected(false);
-        // });
-        // socket.on('new alert', (data) => {
-        //     setAlert(data);
+        // socketio
+        socket.on('connect', () => {
+            setIsConnected(true);
+        });
+        socket.on('disconnect', () => {
+            setIsConnected(false);
+        });
+        socket.on('new alert', (data) => {
+            setAlert(data);
 
-        //     // notify interval
-        //     let currentTime = new Date().getTime();
-        //     if (currentTime - lastSound >= interval) {
-        //         audio.play();
-        //         lastSound = currentTime;
-        //     }
-        // });
-        // return () => {
-        //     socket.off('connect');
-        //     socket.off('disconnect');
-        //     socket.off('new alert');
-        // };
+            // notify interval
+            let currentTime = new Date().getTime();
+            if (currentTime - lastSound >= interval) {
+                audio.play();
+                lastSound = currentTime;
+            }
+        });
+        return () => {
+            socket.off('connect');
+            socket.off('disconnect');
+            socket.off('new alert');
+        };
 
     }, [])
 
@@ -84,7 +124,7 @@ export default function DashBoard() {
         datasets: [
             {
                 label: 'Number of alerts',
-                data: [data ? data.tcp : 0, data ? data.udp : 0, data ? data.icmp : 0, data ? data.arp : 0, data ? data.all - data.ip : 0],
+                data: [data ? data.data.tcp : 0, data ? data.udp : 0, data ? data.icmp : 0, data ? data.arp : 0, data ? data.all - data.ip : 0],
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.2)',
                     'rgba(54, 162, 235, 0.2)',

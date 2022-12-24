@@ -69,7 +69,7 @@ tail.on("line", (data) => {
         mutation: CREATE_ALERT,
         variables: {
           time: new Date(alert.time).toISOString(),
-          prot: alert.prot,
+          prot: alert.prot == "" ? null : alert.prot,
           msg: alert.msg,
           src: alert.src,
           srcport: Number(alert.srcport),
