@@ -15,6 +15,16 @@ const io = require("socket.io")(server, {
 });
 const { gql, ApolloClient, InMemoryCache } = require('@apollo/client');
 
+
+// Discord
+const { Client, Events, GatewayIntentBits } = require('discord.js');
+const bot = new Client({ intents: [GatewayIntentBits.Guilds] });
+bot.once(Events.ClientReady, c => {
+	console.log(`Discord bot ready! Logged in as ${c.user.tag}`);
+  bot.user.setPresence({ activities: [{ name: "I'm watching your system..." }], status: 'online' });
+});
+bot.login(process.env.DISCORD_TOKEN);
+
 const csvFilePath = '/var/log/snort/alert.csv';
 
 app.use(cors());
@@ -36,7 +46,6 @@ io.on('connection', (socket) => {
 });
 
 tail.on("line", (data) => {
-  io.emit('new alert', data);
   csv({
     noheader: true,
     headers: ["time", "sid", "prot", "msg", "src", "srcport", "dest", "dstport"]
@@ -44,6 +53,9 @@ tail.on("line", (data) => {
     .fromString(data)
     .then(jsonObj => {
       const alert = jsonObj[0];
+      io.emit('new alert', alert.msg + " - " 
+      + (alert.prot == "" ? (alert.msg.includes("TCP") ? "TCP" : (alert.msg.includes("UDP") ? "UDP" : (alert.msg.includes("ICMP") ? "ICMP" : null))) : alert.prot)
+      + " - " + alert.src + " -> " + alert.dest + " port " + alert.dstport);
       const client = new ApolloClient({
         uri: 'http://192.168.1.70:3000/api/graphql',
         cache: new InMemoryCache()
@@ -69,7 +81,7 @@ tail.on("line", (data) => {
         mutation: CREATE_ALERT,
         variables: {
           time: new Date(alert.time).toISOString(),
-          prot: alert.prot == "" ? null : alert.prot,
+          prot: alert.prot == "" ? (alert.msg.includes("TCP") ? "TCP" : (alert.msg.includes("UDP") ? "UDP" : (alert.msg.includes("ICMP") ? "ICMP" : null))) : alert.prot,
           msg: alert.msg,
           src: alert.src,
           srcport: Number(alert.srcport),
@@ -77,47 +89,52 @@ tail.on("line", (data) => {
           dstport: Number(alert.dstport),
           SID: Number(alert.sid)
         }
-      })
+      }).then(res => {
+        // console.log(res);
+      }).catch(err => {
+        console.log(err);
+      });
+
+      // notify on discord
+      const alertEmbed = {
+        color: 0x0099ff,
+        title: 'Intrusion detected!',
+        url: 'http://192.168.1.70:3000/alerts',
+        fields: [
+          {
+            name: 'Alert message',
+            value: alert.msg,
+          },
+          {
+            name: 'Protocol',
+            value: alert.prot == "" ? (alert.msg.includes("TCP") ? "TCP" : (alert.msg.includes("UDP") ? "UDP" : (alert.msg.includes("ICMP") ? "ICMP" : null))) : alert.prot,
+            inline: true,
+          },
+          {
+            name: 'Source',
+            value: alert.src,
+            inline: true,
+          },
+          {
+            name: 'Destination',
+            value: alert.dest,
+            inline: true,
+          },
+          {
+            name: 'Port',
+            value: alert.dstport,
+            inline: true,
+          }
+        ],
+        timestamp: new Date(alert.time).toISOString(),
+        footer: {
+          text: 'PBL6 Snort IDS Bot',
+        },
+      };
+      const channel = bot.channels.cache.get('1056418878407839838');
+      if (channel) channel.send({ embeds: [alertEmbed] });    
     })
 });
-
-// Get statistics
-// app.get('/statistic', (req,res) => {
-//   const csvFilePath = '/var/log/snort/alert.csv';
-//   csv({
-//     noheader: true,
-//     headers: ["time","prot","mess","src","dest"]
-//   })
-//   .fromFile(csvFilePath)
-//   .then(jsonObj => {
-//     var tcp = 0;
-//     var udp = 0;
-//     var icmp = 0;
-//     var arp = 0;
-//     var other = 0;
-//     jsonObj.forEach(alert => {
-//       switch(alert.prot){
-//         case "TCP":
-//           tcp++;
-//           break;
-//         case "UDP":
-//           udp++;
-//           break;
-//         case "ICMP":
-//           icmp++;
-//           break;
-//         case "ARP":
-//           arp++;
-//           break;
-//         default:
-//           other++;
-//           break;
-//       }
-//     });
-//     var ip = tcp+udp+icmp+arp;
-//     res.status(200).json({ip: ip, tcp: tcp, udp: udp, icmp: icmp, arp: arp, all: ip+other})
-//   })
-// })
 
 app.set('port', process.env.PORT || 8000);
 

@@ -1,0 +1,27 @@
+# SSH
+alert tcp $EXTERNAL_NET any -> $HOME_NET 22 (msg:"External SSH connection"; flags:S; sid:1000000;)
+# Unused ports
+alert tcp $EXTERNAL_NET any -> $HOME_NET ![22,80,3000,8000] (msg: "Unused port connection attempt"; flags:S; sid:1000002;)
+
+# DDoS attack
+alert icmp any any -> $HOME_NET any (msg:"Possible ICMP flood (DDoS)"; detection_filter:track by_dst, count 300, seconds 3; sid:1000003;)
+alert tcp any any -> $HOME_NET [80,3000,8000] (msg:"Possible SYN flood (DDoS)"; flags: S; flow:stateless; detection_filter:track by_dst, count 50, seconds 10; sid:1000004;)
+
+# LFI attack
+alert tcp any any -> $HOME_NET [80,3000] (msg: "Possible LFI attack (/etc/passwd)"; flow:from_client,established; content: "/etc/passwd"; nocase; sid:1000005;) 
+alert tcp any any -> $HOME_NET [80,3000] (msg: "Possible LFI attack (path traversal)"; flow:from_client,established; content: "../"; nocase; sid:1000006;) 
+
+# SQL injection attack
+alert tcp $EXTERNAL_NET any -> $HOME_NET [80,3000] (msg:"Possible SQL Injection attempt (single-quote/comment)"; flow:from_client,established;pcre:"/(\%27)|(\-\-)|(\%23)/ix"; sid:1000007;)
+alert tcp $EXTERNAL_NET any -> $HOME_NET [80,3000] (msg: "Possible SQL injection attempt (select attack)"; content: "select"; flow:from_client,established; nocase; sid:1000008;) 
+alert tcp $EXTERNAL_NET any -> $HOME_NET [80,3000] (msg: "Possible SQL injection attempt (union attack)"; content: "union"; flow:from_client,established; nocase; sid:1000009;) 
+alert tcp any any -> $HOME_NET [80,3000] (msg: "Possible SQL injection attempt (order by)"; content: "order by"; flow:from_client; nocase; sid:1000010;) 
+
+# XSS attack
+alert tcp any any -> $HOME_NET [80,3000] (msg: "Possible XSS attempt (angle bracket)"; flow:from_client,established;pcre:"/(\%3C)|(\%2E)/ix"; sid:1000017;)
+
+# Web path scan
+alert tcp any any -> $HOME_NET [80,3000] (msg: "Possible web path scan (.git)"; content: ".git"; nocase; flow:from_client,established; sid:1000019;)
+
+# No UDP
+alert udp $EXTERNAL_NET ![53] -> $HOME_NET any (msg: "UDP detected"; sid:1000020;)

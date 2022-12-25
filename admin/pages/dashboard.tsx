@@ -7,9 +7,9 @@ import React from 'react';
 
 import { jsx } from '@keystone-ui/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTriangleExclamation, faNetworkWired } from '@fortawesome/free-solid-svg-icons';
+import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
 import { NumberDotFormat } from '../../utils/format';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { gql, ApolloClient, InMemoryCache } from '@apollo/client';
 
 import {
@@ -17,8 +17,12 @@ import {
     Tooltip,
     Legend,
     ArcElement,
+    CategoryScale,
+    LinearScale,
+    BarElement
 } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
+import { Doughnut, Bar } from 'react-chartjs-2';
+
 
 import io from 'socket.io-client';
 const socket = io('http://192.168.1.70:8000'); // real-time alert socket
@@ -26,70 +30,126 @@ const socket = io('http://192.168.1.70:8000'); // real-time alert socket
 export default function DashBoard() {
     const [isConnected, setIsConnected] = useState(socket.connected); // real-time alert socket connection state
     const [alert, setAlert] = useState("");
-    const [data, setData] = useState(null)
-    const [isLoading, setLoading] = useState(false)
+    const [data, setData] = useState(null);
+    const [barData, setBarData] = useState(null);
+    const [isLoading, setLoading] = useState(false);
+    const chartRef = useRef<ChartJS>(null);
 
     // notify sound
     let lastSound = new Date().getTime();
-    const interval = 5*1000; // 5 seconds
+    const interval = 5 * 1000; // 5 seconds
     const audio = new Audio('/images/notify.mp3');
 
-    const handleRefresh = () => {
-        fetch('http://192.168.1.70:8000/statistic')
-        .then((res) => res.json())
-        .then((data) => {
-            setData(data)
-            setLoading(false)
-        })
-    }
-
-
-    useEffect(() => {
-        setLoading(true)
-        // fetch('http://192.168.1.70:8000/statistic')
-        //     .then((res) => res.json())
-        //     .then((data) => {
-        //         setData(data)
-        //         setLoading(false)
-        //     });
-        let startTime = new Date();
-        startTime.setHours(startTime.getHours() - 6);
+    const fetchCounts = (startTime, endTime) => {
         const client = new ApolloClient({
             uri: 'http://192.168.1.70:3000/api/graphql',
             cache: new InMemoryCache()
-          });
-        const COUNT6H = gql`
-        query Count6H($startTime: DateTime) {
+        });
+        const FETCH_COUNTS = gql`
+        query FetchCounts($startTime: DateTime, $endTime: DateTime) {
+            all: alertsCount(where: {
+                timestamp: {gt: $startTime, lte: $endTime}
+            }),
             tcp: alertsCount(where: {
-              protocol: {equals: "TCP"},
-              timestamp: {gte: $startTime}
+                protocol: {equals: "TCP"},
+                timestamp: {gt: $startTime, lte: $endTime}
             }),
             icmp: alertsCount(where: {
-              protocol: {contains: "ICMP"},
-              timestamp: {gte: $startTime}
+                protocol: {contains: "ICMP"},
+                timestamp: {gt: $startTime, lte: $endTime}
             }),
             udp: alertsCount(where: {
-              protocol: {equals: "UDP"},
-              timestamp: {gte: $startTime}
-            }),
-            arp: alertsCount(where: {
-              protocol: {equals: "ARP"},
-              timestamp: {gte: $startTime}
-            })
-          }
+                protocol: {equals: "UDP"},
+                timestamp: {gt: $startTime, lte: $endTime}
+            })          
+        }
         `;
-        const count = client.query({
-            query: COUNT6H,
+        return client.query({
+            query: FETCH_COUNTS,
             variables: {
-              startTime: startTime.toISOString()
+                startTime: startTime,
+                endTime: endTime
             }
-        }).then((data) => {
-            setData(data)
-            setLoading(false)
-            console.log(data)
-        }).catch(err => {
-            console.log(err)
         })
+    }
+
+    const fetchBarChartData = (minsAgo, nbins) => {
+        const binlen = Math.ceil((minsAgo*60000)/nbins); // miliseconds 
+        const msNow = new Date().getTime();
+        var startTime = new Date(msNow-minsAgo*60000);
+        const tcp = [];
+        const udp = [];
+        const icmp = [];
+        const others = [];
+        const labels = [];
+        for (let i = 0; i < nbins; i++){
+            const endTime = new Date(startTime.getTime() + binlen);
+            labels.push(startTime.getHours()+':'+startTime.getMinutes()+" - "+endTime.getHours()+":"+endTime.getMinutes());
+
+            fetchCounts(startTime.toISOString(), endTime.toISOString())
+            .then((data) => {
+                tcp.push(data.data.tcp)
+                udp.push(data.data.udp)
+                icmp.push(data.data.icmp)
+                others.push(data.data.all-data.data.tcp-data.data.udp-data.data.icmp)
+            })
+            .catch(err => {
+                console.log('chart err: ' + err)
+            });
+            startTime = endTime;
+        }
+        const result = {
+            labels,
+            datasets: [
+                {
+                    label: 'TCP',
+                    data: tcp,
+                    backgroundColor: 'rgb(255, 99, 132)',
+                },
+                {
+                    label: 'UDP',
+                    data: udp,
+                    backgroundColor: 'rgb(75, 192, 192)',
+                },
+                {
+                    label: 'ICMP',
+                    data: icmp,
+                    backgroundColor: 'rgb(53, 162, 235)',
+                },
+                {
+                    label: 'Others',
+                    data: others,
+                    backgroundColor: 'rgb(53, 162, 235)',
+                },
+            ],
+        };
+        setBarData(result);
+    }
+
+    const handleRefresh = () => {
+        let startTime = new Date();
+        startTime.setHours(startTime.getHours() - 6);
+        const endTime = new Date();
+        fetchCounts(startTime.toISOString(), endTime.toISOString())
+        .then((data) => {
+            setData(data.data)
+            setLoading(false);
+        })
+        .catch(err => {
+            console.log(err)
+        });
+
+        fetchBarChartData(12*60, 20);
+
+        setTimeout(() => {
+            const chart = chartRef.current;
+            chart?.update();
+        }, 1000)
+    }
+
+    useEffect(() => {
+        setLoading(true)
+        handleRefresh();
 
         // socketio
         socket.on('connect', () => {
@@ -116,34 +176,43 @@ export default function DashBoard() {
 
     }, [])
 
-    ChartJS.register(ArcElement, Tooltip, Legend);
-
-    const labels = ['TCP', 'UDP', 'ICMP', 'ARP', 'Others'];
+    // Charts
+    ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
+    const labels = ['TCP', 'UDP', 'ICMP', 'Others'];
     const chartdata = {
         labels,
         datasets: [
             {
                 label: 'Number of alerts',
-                data: [data ? data.data.tcp : 0, data ? data.udp : 0, data ? data.icmp : 0, data ? data.arp : 0, data ? data.all - data.ip : 0],
+                data: [data ? data.tcp : 0, data ? data.udp : 0, data ? data.icmp : 0, data ? (data.all - data.tcp - data.udp - data.icmp) : 0],
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.2)',
                     'rgba(54, 162, 235, 0.2)',
                     'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(75, 192, 192, 0.2)'
                 ],
                 borderColor: [
                     'rgba(255, 99, 132, 1)',
                     'rgba(54, 162, 235, 1)',
                     'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
+                    'rgba(75, 192, 192, 1)'
                 ],
                 borderWidth: 1,
             },
         ],
     };
 
+    const options = {
+        responsive: true,
+        scales: {
+            x: {
+                stacked: true,
+            },
+            y: {
+                stacked: true,
+            },
+        },
+    };
 
     if (isLoading) return <PageContainer header={<Heading type="h2">Snort Dashboard</Heading>}><p>Loading...</p></PageContainer>
     if (!data) return <PageContainer header={<Heading type="h2">Snort Dashboard</Heading>}><p>No data</p></PageContainer>
@@ -156,13 +225,18 @@ export default function DashBoard() {
                         display: flex;
                         flex-wrap: wrap;
                         justify-content: center;
-                         align-items: center;
+                        align-items: center;
                     }
                     .col-4 {
                         width: 300px;
                         margin: 1.5rem;
                     }
+                    .col-8 {
+                        width: 650px;
+                        margin: 0.5rem;
+                    }
                     .card {
+                        margin: 0.25rem;
                         width: 100%;
                         height: 100%;
                         cursor: pointer;
@@ -193,7 +267,7 @@ export default function DashBoard() {
                     }
 
                     .btn-success {
-                        margin: 1rem 0 0 4rem;
+                        margin: 1rem 1rem;
                         background-color: #04AA6D;
                         border: 1px solid green;
                         border-radius: 5px;
@@ -233,66 +307,56 @@ export default function DashBoard() {
                         </div>
                     )}
                 </div>
-                <button className='btn-success' type="button" onClick={() => handleRefresh()}>Refresh</button>
+                Showing alerts since 12 hours ago... <button className='btn-success' type="button" onClick={() => handleRefresh()}>Refresh</button>
                 <div className='row'>
-                    <div className='col-4'>
-                        <div className="card row">
-                            <div className="card-body row">
-                                <div><span className='card-title' style={{
-                                    color: "#903749"
-                                }}><FontAwesomeIcon icon={faTriangleExclamation} />Total alerts</span></div>
-                                <div><span className='card-number' style={{
-                                    color: "#E84545"
-                                }}>{NumberDotFormat(data.all)}</span></div>
+                    <div className='col-8'>
+                        <div className='row'>
+                            <div className='col-6'>
+                                <div className="card row">
+                                    <div className="card-body row">
+                                        <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> All alerts</span></div>
+                                        <div><span className='card-number'>{NumberDotFormat(data.all)}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className='col-6'>
+                                <div className="card row">
+                                    <div className="card-body row">
+                                        <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> TCP alerts</span></div>
+                                        <div><span className='card-number'>{NumberDotFormat(data.tcp)}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className='col-6'>
+                                <div className="card row">
+                                    <div className="card-body row">
+                                        <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> ICMP alerts</span></div>
+                                        <div><span className='card-number'>{NumberDotFormat(data.icmp)}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className='col-6'>
+                                <div className="card row">
+                                    <div className="card-body row">
+                                        <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> UDP alerts</span></div>
+                                        <div><span className='card-number'>{NumberDotFormat(data.udp)}</span></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div className='col-4'>
-                        <div className="card row">
-                            <div className="card-body row">
-                                <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> IP alerts</span></div>
-                                <div><span className='card-number'>{NumberDotFormat(data.ip)}</span></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col-4'>
-                        <div className="card row">
-                            <div className="card-body row">
-                                <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> TCP alerts</span></div>
-                                <div><span className='card-number'>{NumberDotFormat(data.tcp)}</span></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col-4'>
-                        <div className="card row">
-                            <div className="card-body row">
-                                <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> ICMP alerts</span></div>
-                                <div><span className='card-number'>{NumberDotFormat(data.icmp)}</span></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col-4'>
-                        <div className="card row">
-                            <div className="card-body row">
-                                <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> UDP alerts</span></div>
-                                <div><span className='card-number'>{NumberDotFormat(data.udp)}</span></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col-4'>
-                        <div className="card row">
-                            <div className="card-body row">
-                                <div><span className='card-title'><FontAwesomeIcon icon={faNetworkWired} /> ARP alerts</span></div>
-                                <div><span className='card-number'>{NumberDotFormat(data.arp)}</span></div>
-                            </div>
+                        <div style={{
+                            margin: "1.5rem",
+                        }}>
+                            <Doughnut height="400px" width="400px" data={chartdata} />
                         </div>
                     </div>
                 </div>
-
                 <div style={{
                     margin: "1.5rem",
                 }}>
-                    <Doughnut height="400px" width="400px" options={{ maintainAspectRatio: false }} data={chartdata} />
+                    <Bar ref={chartRef} options={options} data={barData} />
                 </div>
             </>
         </PageContainer >
