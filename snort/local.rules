@@ -8,20 +8,33 @@ alert icmp any any -> $HOME_NET any (msg:"Possible ICMP flood (DDoS)"; detection
 alert tcp any any -> $HOME_NET [80,3000,8000] (msg:"Possible SYN flood (DDoS)"; flags: S; flow:stateless; detection_filter:track by_dst, count 50, seconds 10; sid:1000004;)
 
 # LFI attack
-alert tcp any any -> $HOME_NET [80,3000] (msg: "Possible LFI attack (/etc/passwd)"; flow:from_client,established; content: "/etc/passwd"; nocase; sid:1000005;) 
-alert tcp any any -> $HOME_NET [80,3000] (msg: "Possible LFI attack (path traversal)"; flow:from_client,established; content: "../"; nocase; sid:1000006;) 
+alert tcp $EXTERNAL_NET any -> $HOME_NET [80,3000] (msg: "Possible LFI attack (/etc/passwd)"; flow:from_client,established; content: "/etc/passwd"; nocase; sid:1000005;) 
+alert tcp $EXTERNAL_NET any -> $HOME_NET [80,3000] (msg: "Possible LFI attack (path traversal)"; flow:from_client,established; content: "../"; nocase; sid:1000006;) 
 
 # SQL injection attack
 alert tcp $EXTERNAL_NET any -> $HOME_NET [80,3000] (msg:"Possible SQL Injection attempt (single-quote/comment)"; flow:from_client,established;pcre:"/(\%27)|(\-\-)|(\%23)/ix"; sid:1000007;)
-alert tcp $EXTERNAL_NET any -> $HOME_NET [80,3000] (msg: "Possible SQL injection attempt (select attack)"; content: "select"; flow:from_client,established; nocase; sid:1000008;) 
-alert tcp $EXTERNAL_NET any -> $HOME_NET [80,3000] (msg: "Possible SQL injection attempt (union attack)"; content: "union"; flow:from_client,established; nocase; sid:1000009;) 
-alert tcp any any -> $HOME_NET [80,3000] (msg: "Possible SQL injection attempt (order by)"; content: "order by"; flow:from_client; nocase; sid:1000010;) 
+alert tcp $EXTERNAL_NET any -> $HOME_NET [80,3000] (msg: "Possible SQL injection attempt (select)"; content: "select"; flow:from_client,established; nocase; sid:1000008;) 
+alert tcp $EXTERNAL_NET any -> $HOME_NET [80,3000] (msg: "Possible SQL injection attempt (union)"; content: "union"; flow:from_client,established; nocase; sid:1000009;) 
+alert tcp $EXTERNAL_NET any -> $HOME_NET [80,3000] (msg: "Possible SQL injection attempt (order by)"; content: "order by"; flow:from_client; nocase; sid:1000010;) 
 
 # XSS attack
-alert tcp any any -> $HOME_NET [80,3000] (msg: "Possible XSS attempt (angle bracket)"; flow:from_client,established;pcre:"/(\%3C)|(\%2E)/ix"; sid:1000017;)
+alert tcp $EXTERNAL_NET any -> $HOME_NET [80,3000] (msg: "Possible XSS attempt (angle bracket)"; flow:from_client,established;pcre:"/(\%3C)|(\%2E)/ix"; sid:1000017;)
 
 # Web path scan
-alert tcp any any -> $HOME_NET [80,3000] (msg: "Possible web path scan (.git)"; content: ".git"; nocase; flow:from_client,established; sid:1000019;)
+alert tcp $EXTERNAL_NET any -> $HOME_NET [80,3000] (msg: "Possible web path scan (.git)"; content: ".git"; nocase; flow:from_client,established; sid:1000019;)
 
 # No UDP
 alert udp $EXTERNAL_NET ![53] -> $HOME_NET any (msg: "UDP detected"; sid:1000020;)
+
+# Meterpreter reversed shell
+alert tcp $HOME_NET any -> $EXTERNAL_NET $HTTP_PORTS (msg:"Metasploit Meterpreter HTTP reversed shell"; flow:to_server,established; content:"RECV"; content:"POST"; pcre:"/^\/[a-z0-9]{4,5}_[a-z0-9]{16}\/$/Ui"; sid:1000021;)
+alert tcp $HOME_NET any -> $EXTERNAL_NET 4444 (msg: "Possible reversed shell connection"; sid: 1000022;)
+
+# Some CVEs
+alert icmp $EXTERNAL_NET any -> $HOME_NET any (msg:"ICMP redirect host"; icode:1; itype:5; reference:cve,1999-0265; sid:1000023;)
+alert icmp $EXTERNAL_NET any -> $HOME_NET any (msg:"ICMP redirect net"; icode:0; itype:5; reference:cve,1999-0265; sid:1000024;)
+alert tcp $EXTERNAL_NET any -> $HOME_NET 143 (msg:"EXPLOIT MDAEMON (Post Auth) Remote Root IMAP FETCH Command Universal Exploit"; flow:established,to_server; content:"FLAGS BODY"; pcre:"/[0-9a-zA-Z]{200,}/R"; content:"|EB 06 90 90 8b 11 DC 64 90|"; distance:0; reference:cve,2008-1358; sid:1000025;)
+alert tcp $EXTERNAL_NET $HTTP_PORTS -> $HOME_NET any (msg:"DELETED CAN-2005-0399 Gif Vuln via http"; flow: from_server,established; content:"GIF89a"; content:"|21 ff 0b|NETSCAPE2.0"; byte_test:1,!=,3,0,relative; reference:cve,2005-0399; sid:1000026;)
+alert tcp $HOME_NET any -> $EXTERNAL_NET any (msg:"EXPLOIT RealVNC Server Authentication Bypass Successful"; flowbits:isset,BSvnc.null.auth.sent; flow:established; dsize:4; content:"|00 00 00 00|"; depth:4; flowbits:unset,BSis.vnc.setup; flowbits:unset,BSvnc.auth.offered; sid:1000027;)
+alert tcp $EXTERNAL_NET any -> $HOME_NET 4000 (msg:"EXPLOIT SecurityGateway 1.0.1 Remote Buffer Overflow"; flow:to_server,established; content:"POST "; depth:5; nocase; content:"/SecurityGateway.dll"; nocase; distance:0; content:"logon"; nocase; distance:0; content:"&username"; nocase; distance:0; pcre:"/\x3d[^\x26]{720}/R"; reference:cve,2008-4193; sid:1000028;)
+alert tcp $EXTERNAL_NET any -> $HOME_NET 2967:2968 (msg:"EXPLOIT Symantec Remote Management RTVScan Exploit"; flow:established,to_server; content:"|10|"; depth:2; content:"|00 24 00|"; distance:0; within:20; content:"|5c|"; distance:0; isdataat:380,relative; reference:cve,2006-3455; sid:1000029;)
