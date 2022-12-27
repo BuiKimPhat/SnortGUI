@@ -1,7 +1,7 @@
 # SSH
 alert tcp $EXTERNAL_NET any -> $HOME_NET 22 (msg:"External SSH connection"; flags:S; sid:1000000;)
 # Unused ports
-alert tcp $EXTERNAL_NET any -> $HOME_NET ![22,80,3000,8000] (msg: "Unused port connection attempt"; flags:S; sid:1000002;)
+alert tcp $EXTERNAL_NET any -> $HOME_NET ![22,80,3000,8000] (msg: "Unused port connection attempt"; flags:S; flow:from_client; sid:1000002;)
 
 # DDoS attack
 alert icmp any any -> $HOME_NET any (msg:"Possible ICMP flood (DDoS)"; detection_filter:track by_dst, count 300, seconds 3; sid:1000003;)
