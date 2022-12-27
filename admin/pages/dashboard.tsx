@@ -70,7 +70,7 @@ export default function DashBoard() {
                 startTime: startTime,
                 endTime: endTime
             }
-        })
+        }).then(res => res.data)
     }
 
     const fetchBarChartData = (minsAgo, nbins) => {
@@ -84,14 +84,14 @@ export default function DashBoard() {
         const labels = [];
         for (let i = 0; i < nbins; i++){
             const endTime = new Date(startTime.getTime() + binlen);
-            labels.push(startTime.getHours()+':'+startTime.getMinutes()+" - "+endTime.getHours()+":"+endTime.getMinutes());
+            labels.push(startTime.getHours()+'h '+startTime.getDate()+"/"+startTime.getMonth()+"-"+endTime.getHours()+'h '+endTime.getDate()+"/"+endTime.getMonth());
 
             fetchCounts(startTime.toISOString(), endTime.toISOString())
             .then((data) => {
-                tcp.push(data.data.tcp)
-                udp.push(data.data.udp)
-                icmp.push(data.data.icmp)
-                others.push(data.data.all-data.data.tcp-data.data.udp-data.data.icmp)
+                tcp.push(data.tcp)
+                udp.push(data.udp)
+                icmp.push(data.icmp)
+                others.push(data.all-data.tcp-data.udp-data.icmp)
             })
             .catch(err => {
                 console.log('chart err: ' + err)
@@ -128,18 +128,17 @@ export default function DashBoard() {
 
     const handleRefresh = () => {
         let startTime = new Date();
-        startTime.setHours(startTime.getHours() - 6);
+        startTime.setDate(startTime.getDate() - 7);
         const endTime = new Date();
         fetchCounts(startTime.toISOString(), endTime.toISOString())
         .then((data) => {
-            setData(data.data)
-            setLoading(false);
+            setData(data)
         })
         .catch(err => {
             console.log(err)
         });
 
-        fetchBarChartData(12*60, 20);
+        fetchBarChartData(7*24*60, 20);
 
         setTimeout(() => {
             const chart = chartRef.current;
@@ -150,6 +149,7 @@ export default function DashBoard() {
     useEffect(() => {
         setLoading(true)
         handleRefresh();
+        setLoading(false);
 
         // socketio
         socket.on('connect', () => {
@@ -307,7 +307,7 @@ export default function DashBoard() {
                         </div>
                     )}
                 </div>
-                Showing alerts since 12 hours ago... <button className='btn-success' type="button" onClick={() => handleRefresh()}>Refresh</button>
+                Showing alerts since 7 days ago... <button className='btn-success' type="button" onClick={() => handleRefresh()}>Refresh</button>
                 <div className='row'>
                     <div className='col-8'>
                         <div className='row'>
