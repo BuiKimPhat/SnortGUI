@@ -107,7 +107,7 @@ tail.on("line", (data) => {
           },
           {
             name: 'Protocol',
-            value: alert.prot == "" ? (alert.msg.includes("TCP") ? "TCP" : (alert.msg.includes("UDP") ? "UDP" : (alert.msg.includes("ICMP") ? "ICMP" : null))) : alert.prot,
+            value: alert.prot == "" ? (alert.msg.includes("TCP") ? "TCP" : (alert.msg.includes("UDP") ? "UDP" : (alert.msg.includes("ICMP") ? "ICMP" : ""))) : alert.prot,
             inline: true,
           },
           {
@@ -122,7 +122,7 @@ tail.on("line", (data) => {
           },
           {
             name: 'Port',
-            value: alert.dstport,
+            value: Number(alert.dstport),
             inline: true,
           }
         ],
